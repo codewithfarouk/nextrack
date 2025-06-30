@@ -1,0 +1,56 @@
+"use client";
+
+import React from "react";
+import { BacklogManager } from "../../../dashboard/BacklogManager";
+import { ContentCard } from "../../../dashboard/ContentCard";
+
+
+interface JiraTicket {
+  key: string;
+  type: string;
+  priority: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+  assignee: string;
+  reporter: string;
+}
+
+interface Backlog {
+  id: string;
+  title: string;
+  content: JiraTicket[];
+  roles: { id: number; name: string }[];
+  createdAt: string;
+}
+
+interface BacklogManagerWrapperProps {
+  backlogs: Backlog[];
+  tickets: JiraTicket[];
+  onSave: (name: string, roleIds: number[]) => void;
+  onDelete: (id: string) => void;
+  onLoad: (id: string) => void;
+  onExport: (id: string) => void;
+}
+
+export const BacklogManagerWrapper: React.FC<BacklogManagerWrapperProps> = ({
+  backlogs,
+  tickets,
+  onSave,
+  onDelete,
+  onLoad,
+  onExport,
+}) => {
+  return (
+    <ContentCard title="Manage Backlogs">
+      <BacklogManager
+        backlogs={backlogs}
+        onSave={onSave}
+        onDelete={onDelete}
+        onLoad={onLoad}
+        onExport={onExport}
+        currentData={tickets}
+      />
+    </ContentCard>
+  );
+};

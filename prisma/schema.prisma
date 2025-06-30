@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     Int                 @id @default(autoincrement())
+  email                  String              @unique
+  password               String?
+  name                   String?
+  image                  String?
+  roleId                 Int
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  role                   Role                @relation(fields: [roleId], references: [id])
+  backlogs               Backlog[]           @relation("BacklogCreator")
+  assignedBacklogs       Backlog[]           @relation("BacklogUsers")
+
+  resetToken       String?   // jeton unique envoyé par mail
+  resetTokenExpiry DateTime? // validité du lien (optionnel)
+
+  // Relations inverses des historiques
+  activatedHistorique    HistoriqueStatus[]  @relation("HistoriqueActivatedBy")
+  deactivatedHistorique  HistoriqueStatus[]  @relation("HistoriqueDeactivatedBy")
+}
+
+model Role {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  users       User[]
+  backlogs    Backlog[]    @relation("BacklogRoles")
+  permissions Permission[] @relation("RolePermissions")
+}
+
+model Permission {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  roles     Role[]   @relation("RolePermissions")
+}
+
+model Backlog {
+  id                 Int                 @id @default(autoincrement())
+  title              String
+  content            Json
+  moduleType         String
+  creatorId          Int
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  creator            User                @relation("BacklogCreator", fields: [creatorId], references: [id])
+  roles              Role[]              @relation("BacklogRoles")
+  users              User[]              @relation("BacklogUsers")
+
+  // Inverse de HistoriqueStatus
+  historiqueStatuses HistoriqueStatus[]
+}
+
+model HistoriqueStatus {
+  id               String     @id @default(cuid())
+  backlogId        Int
+  activatedById    Int
+  deactivatedById  Int?
+  activatedAt      DateTime
+  deactivatedAt    DateTime?
+  isActive         Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  backlog          Backlog    @relation(fields: [backlogId], references: [id], onDelete: Cascade)
+  activatedBy      User       @relation("HistoriqueActivatedBy", fields: [activatedById], references: [id])
+  deactivatedBy    User?      @relation("HistoriqueDeactivatedBy", fields: [deactivatedById], references: [id])
+
+  @@map("historique_status")
+}
